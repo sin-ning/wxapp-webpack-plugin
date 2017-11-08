@@ -140,10 +140,34 @@ export default class WXAppPlugin {
 		return context;
 	}
 
-	async getEntryResource() {
+async getEntryResource() {
 		const appJSONFile = resolve(this.base, 'app.json');
 		const { pages = [] } = await readJson(appJSONFile);
-		return ['app'].concat(pages);
+
+		// 修复 components 下的组件不能引入
+		const filePath = resolve('src/components');
+		const components = await this.getFiles(filePath);
+
+		return (['app'].concat(pages)).concat(components);
+	}
+
+	async getFiles(filePath) {
+		var cps = [];
+		return new Promise((resolve, reject) => {
+			fs.readdir(filePath, function(err, files) {
+				if (err) {
+					console.warn(err)
+				}
+				else {
+					files.forEach(function (fileName) {
+						if (fileName.indexOf('.') === -1) {
+							cps.push(`components/${fileName}/${fileName}`);
+						}
+					});
+					resolve(cps);
+				}
+			});
+		});
 	}
 
 	getFullScriptPath(path) {
